@@ -1,0 +1,28 @@
+{
+  "name": "svd",
+  "version": "1.0.0",
+  "description": "simple virtual DOM",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify index.js -o bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaic1/SVD.git"
+  },
+  "keywords": [
+    "virtual",
+    "DOM"
+  ],
+  "author": "chj",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jaic1/SVD/issues"
+  },
+  "homepage": "https://github.com/Jaic1/SVD#readme",
+  "devDependencies": {
+    "standard": "*",
+    "browserify": "*"
+  }
+}
