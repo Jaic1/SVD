@@ -1,3 +1,5 @@
 window.svd = {
-    el: require('./lib/element')
+    el: require('./lib/element'),
+    diff: require('./lib/diff'),
+    patch: require('./lib/patch')
 }
