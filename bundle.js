@@ -7,7 +7,8 @@ window.svd = {
 }
 },{"./lib/diff":2,"./lib/element":3,"./lib/list-diff":4,"./lib/patch":5}],2:[function(require,module,exports){
 var patch = require('./patch')
-var listDiff = require('list-diff2')
+var listDiff = require('./list-diff')
+var listDiff2 = require('list-diff2')
 var VirtualElement = require('./element')
 
 /**
@@ -60,8 +61,8 @@ function dfsElement(oldElement, newElement, index, patches) {
 }
 
 function diffChildren(oldChildren, newChildren, index, patches, currentPatch){
-    var difference = listDiff(oldChildren, newChildren, 'key')
-    newChildren = difference.children
+    var difference = listDiff.diffDynamic(oldChildren, newChildren, 'key')
+    newChildren = difference.newChildren
 
     // check patch type: REORDER
     if(difference.moves.length){
@@ -123,7 +124,7 @@ function isSameElement(oldElement, newElement){
 }
 
 module.exports = diff
-},{"./element":3,"./patch":5,"list-diff2":6}],3:[function(require,module,exports){
+},{"./element":3,"./list-diff":4,"./patch":5,"list-diff2":6}],3:[function(require,module,exports){
 
 /**
  * Create an instance of Virtual-dom Element
@@ -349,25 +350,35 @@ function diffDynamic(oldList, newList, key = "key") {
 
     // bottom-up dynamic algorithm
     // step 1: calculate the distance matrix
-    var m = len(oldList)
-    var n = len(newList)
+    var m = oldList.length
+    var n = newList.length
     var distance = new Array(m + 1)
     for (var i = 0; i <= m; i++) { distance[i] = new Array(n + 1) }
 
-    for (var j = 0; j <= n; j++) { distance[0][j] = 0 }
-    for (var i = 0; i <= m; i++) { distance[i][0] = 0 }
+    for (var j = 0; j <= n; j++) { distance[0][j] = j }
+    for (var i = 0; i <= m; i++) { distance[i][0] = i }
 
     for (var i = 1; i <= m; i++) {
-        var oldItemKey = getItemKey(oldList[i], key)
+        var oldItemKey = getItemKey(oldList[i - 1], key)
         for (var j = 1; j <= n; j++) {
-            var newItemKey = getItemKey(newList[i], key)
+            var newItemKey = getItemKey(newList[j - 1], key)
             var substitutionCost = (oldItemKey === newItemKey) ? 0 : 1
+            // // debug
+            // if(i == m && j == n){
+            //     console.log(oldItemKey)
+            //     console.log(newItemKey)
+            // }
+            // //
 
-            distance[i][j] = minimum(distance[i - 1][j] + 1,                   // deletion
-                distance[i][j - 1] + 1,                   // insertion
-                distance[i - 1][j - 1] + substitutionCost)  // substitution
+            distance[i][j] = minimum(distance[i - 1][j] + 1,        // deletion
+                distance[i][j - 1] + 1,                             // insertion
+                distance[i - 1][j - 1] + substitutionCost)          // substitution
         }
     }
+
+    // // debug
+    // console.log(distance)
+    // //
 
     // step 2: calculate the path(i.e. moves) using the distance matrix
     var i = m, j = n
@@ -512,6 +523,7 @@ function computeNewChildren(oldList, newList, key, newKeyIndex, newFreeItems) {
 
 var listDiff = new Object()
 listDiff.diff = diff
+listDiff.diffDynamic = diffDynamic
 module.exports = listDiff
 },{}],5:[function(require,module,exports){
 
