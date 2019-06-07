@@ -396,8 +396,7 @@ function diffDynamic(oldList, newList, key = "key") {
         }
         else {
             if (distance[i][j] != distance[i - 1][j - 1]) {
-                moves.push(createMove(type = 2, index = i - 1,
-                    item = { oldItem: oldList[i - 1], newItem: newList[j - 1] }))
+                moves.push(createMove(type = 2, index = i - 1, item = newList[j - 1]))
             }
             i--
             j--
@@ -434,6 +433,8 @@ function diffDynamic(oldList, newList, key = "key") {
  * @param {Number} type - 0: remove, 1: insert, 2: replace 
  * @param {Number} index - the start position 
  * @param {Object} item - default to null, specify it if type is 1 or 2
+ *                        1 : newItem to be inserted
+ *                        2 : newItem to replace oldItem
  */
 function createMove(type, index, item = null) {
     return {
@@ -526,7 +527,6 @@ listDiff.diff = diff
 listDiff.diffDynamic = diffDynamic
 module.exports = listDiff
 },{}],5:[function(require,module,exports){
-
 const REPLACE = 0
 const REORDER = 1
 const PROPS = 2
@@ -540,20 +540,137 @@ const TEXT = 3
  *                         - newElement{Element}, newMoves{Array}, newProps{Object}, newText{String} 
  * @returns {Object} patch object containing 'type' and 'content'
  */
-function createPatch(type, content){
+function createPatch(type, content) {
     return {
         type: type,
         content: content
     }
 }
 
-patch = new Object()
-patch.REPLACE = REPLACE
-patch.REORDER = REORDER
-patch.PROPS = PROPS
-patch.TEXT = TEXT
-patch.createPatch = createPatch
-module.exports = patch
+/**
+ * apply patches to the real DOM tree
+ * @param {Object} tree - the root of the DOM tree 
+ * @param {Object} patches - containing index-patch arrays
+ */
+function patch(tree, patches) {
+    var walker = { index: 0 }
+    dfsWalk(tree, patches, walker)
+}
+
+function dfsWalk(node, patches, walker) {
+    var currentPatch = patches[walker.index]
+
+    var childCount = node.hasChildNodes() ? node.childNodes.length : 0
+    for (let i = 0; i < childCount; i++) {
+        var child = node.childNodes[i]
+        walker.index++
+        dfsWalk(child, patches, walker)
+    }
+
+    if (currentPatch) {
+        applyPatch(node, currentPatch)
+    }
+}
+
+function applyPatch(node, currentPatch) {
+    for (var patch of currentPatch) {
+        switch (patch.type) {
+            case REPLACE:
+                var newNode = createNewNode(patch.content)
+                node.parentNode.replaceChild(newNode, node)
+                break
+            case REORDER:
+                reorderChildren(patch.content)
+                break
+            case PROPS:
+                setProps(patch.content)
+                break
+            case TEXT:
+                try {
+                    node.textContent = patch.content
+                } catch (Error) {
+                    throw new Error('Can not set textContent: ' + patch.content)
+                }
+                break
+            default:
+                throw new Error('Unknown patch type: ' + patch.type)
+        }
+    }
+
+    function createNewNode(item) {
+        if (Object.prototype.toString.call(item) === '[object String]') {
+            // item type: String
+            return document.createTextNode(item)
+        }
+        else {
+            // item type: Element
+            return item.render()
+        }
+    }
+
+    function reorderChildren(moves) {
+        for (var move of moves) {
+            var index = move.index
+            var item = move.item
+            switch (move.type) {
+                case 0:       // remove
+                    node.removeChild(node.childNodes[index])
+                    break
+                case 1:       // insert
+                    var newNode = createNewNode(item)
+                    node.insertBefore(newNode, node.childNodes[index])
+                    break
+                case 2:       // replace
+                    var newNode = createNewNode(item)
+                    node.replaceChild(newNode, node.childNodes[index])
+                    break
+                default:
+                    throw new Error('Unknown move type: ' + move.type)
+            }
+        }
+    }
+
+    function setProps(propsPatch) {
+        for (var key in propsPatch) {
+            var value = propsPatch[key]
+            if (value === undefined) {
+                node.removeAttribute(key)
+            }
+            else {
+                setAttr(key, value)
+            }
+        }
+
+        function setAttr(key, value) {
+            switch (key) {
+                case 'style':
+                    node.style.cssText = value
+                    break
+                case 'value':
+                    var tagName = node.tagName || ''
+                    tagName = tagName.toLowerCase()
+                    if (tagName === 'input' || tagName === 'textarea') {
+                        node.value = value
+                    }
+                    else {
+                        node.setAttribute(key, value)
+                    }
+                    break
+                default:
+                    node.setAttribute(key, value)
+            }
+        }
+    }
+}
+
+Patch = new Object()
+Patch.REPLACE = REPLACE
+Patch.REORDER = REORDER
+Patch.PROPS = PROPS
+Patch.TEXT = TEXT
+Patch.createPatch = createPatch
+Patch.patch = patch
+module.exports = Patch
 },{}],6:[function(require,module,exports){
 module.exports = require('./lib/diff').diff
 
