@@ -1,0 +1,151 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>simple virtual dom example</title>
+    <style>
+        thead {
+            color: green;
+        }
+
+        tbody {
+            color: blue;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+</body>
+
+<script src="../dist/bundle.js"></script>
+<script>
+    var el = svd.el
+    var diff = svd.diff
+    var patch = svd.patch.patch
+
+    var AGE = 'age'
+    var REPUTATION = 'reputation'
+
+    var sortKey = AGE
+    var sortType = 1
+
+    // generate random users
+    var list = []
+    var userCount = 50
+    for (let i = 1; i <= userCount; i++) {
+        let user = {
+            username: '',
+            age: Math.round(Math.random() * 99 + 1),
+            reputation: Math.round(Math.random() * 1000),
+            uid: 'user' + i
+        }
+        user.username += String.fromCharCode(Math.round(Math.random() * 25) + 65)
+        for (let j = 1; j <= 4; j++) {
+            user.username += String.fromCharCode(Math.round(Math.random() * 25) + 97)
+        }
+        list.push(user)
+    }
+
+    // render table
+    function renderTree() {
+        var rows = renderRows()
+        return el('div', [
+            el('b', ['sortKey: ' + sortKey, ' | sortType: ' + (sortType ? 'up' : 'down')]),
+            el('table', [
+                el('thead', [
+                    el('tr', [
+                        el('th', ['UID']),
+                        el('th', ['NAME']),
+                        el('th', {
+                            'id': 'sort-head1',
+                            sortKey: 'age'
+                        }, ['AGE']),
+                        el('th', {
+                            'id': 'sort-head2',
+                            sortKey: 'reputation'
+                        }, ['REPUTATION'])
+                    ])
+                ]),
+                el('tbody', rows)
+            ])
+        ])
+    }
+
+    function renderRows() {
+        var rows = []
+        for (var i = 0, len = list.length; i < len; i++) {
+            var item = list[i]
+            rows.push(
+                el('tr', {
+                    key: item.uid
+                }, [
+                    el('td', [item.uid]),
+                    el('td', [item.username]),
+                    el('td', [item.age]),
+                    el('td', [item.reputation]),
+                ])
+            )
+        }
+        return rows
+    }
+
+    var tree = renderTree()
+    var dom = tree.render()
+    document.body.appendChild(dom)
+
+    var sortTriggers = [
+        document.getElementById('sort-head1'),
+        document.getElementById('sort-head2')
+    ]
+    for (var i = 0, len = sortTriggers.length; i < len; i++) {
+        var trigger = sortTriggers[i];
+        (function (_trigger) {
+            _trigger.onclick = function () {
+                var key = _trigger.getAttribute('sortKey')
+                if (key === sortKey) {
+                    sortType = !sortType
+                } else {
+                    sortKey = key
+                    sortType = 1
+                }
+                sortData()
+                var newTree = renderTree()
+                var patches = diff(tree, newTree)
+                patch(dom, patches)
+                tree = newTree
+            }
+        })(trigger)
+    }
+
+    function sortData() {
+        list.sort(function (a, b) {
+            if (sortType) {
+                return a[sortKey] - b[sortKey]
+            } else {
+                return b[sortKey] - a[sortKey]
+            }
+        })
+    }
+
+    var startTime = new Date().getTime()
+    var head1 = document.getElementById('sort-head1')
+    var head2 = document.getElementById('sort-head2')
+    for(let i = 1;i<= 1000;i++){
+        head1.click()
+    }
+    for(let i = 1;i<= 1000;i++){
+        head2.click()
+    }
+    var endTime = new Date().getTime()
+    console.log(endTime - startTime)
+
+</script>
+
+</html>
