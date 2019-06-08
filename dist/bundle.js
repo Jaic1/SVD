@@ -3,7 +3,8 @@ window.svd = {
     el: require('./lib/element'),
     diff: require('./lib/diff'),
     patch: require('./lib/patch'),
-    listDiff: require('./lib/list-diff')
+    listDiff: require('./lib/list-diff'),
+    count: 0
 }
 },{"./lib/diff":2,"./lib/element":3,"./lib/list-diff":4,"./lib/patch":5}],2:[function(require,module,exports){
 var patch = require('./patch')
@@ -61,7 +62,7 @@ function dfsElement(oldElement, newElement, index, patches) {
 }
 
 function diffChildren(oldChildren, newChildren, index, patches, currentPatch){
-    var difference = listDiff.diffDynamic(oldChildren, newChildren, 'key')
+    var difference = listDiff.diff(oldChildren, newChildren, 'key')
     newChildren = difference.newChildren
 
     // check patch type: REORDER

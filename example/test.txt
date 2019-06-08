@@ -1,0 +1,36 @@
+
+listDiff:
+var oldList = [{id: "a"}, {id: "b"}, {id: "c"}, {id: "d"}, {id: "e"}]
+var newList = [{id: "c"}, {id: "a"}, {id: "b"}, {id: "e"}, {id: "f"}]
+var difference = svd.listDiff.diffDynamic(oldList, newList, "id")
+difference.moves.forEach(function(move) {
+  if (move.type === 0) {
+    oldList.splice(move.index, 1) // type 0 is removing
+  } else if (move.type === 1) {
+    oldList.splice(move.index, 0, move.item) // type 1 is inserting
+  } else if (move.type === 2) {
+    oldList[move.index] = move.item.newItem
+  }
+})
+
+
+Element:
+var el = svd.el
+var diff = svd.diff
+var patch = svd.patch
+
+var tree = el('div', {'id': 'container'}, [
+    el('h1', {style: 'color: blue'}, ['virtal dom']),
+    el('p', ['Hello, virtual-dom']),
+    el('ul', [el('li')])
+])
+
+var root = tree.render()
+
+var newTree = el('div', {'id': 'container'}, [
+    el('h1', {style: 'color: red'}, ['simple virtal dom']),
+    el('p', ['Hello, virtual-dom']),
+    el('ul', [el('li'), el('li')])
+])
+
+var patches = diff(tree, newTree)

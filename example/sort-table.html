@@ -1,6 +1,6 @@
 <!doctype html>
 
-<html>
+<html lang="en">
 
 <head>
     <title>simple virtual dom example</title>
@@ -38,13 +38,14 @@
 
     // generate random users
     var list = []
-    var userCount = 50
+    var userCount = 100
     for (let i = 1; i <= userCount; i++) {
         let user = {
+            uid: 'user' + i,
             username: '',
             age: Math.round(Math.random() * 99 + 1),
             reputation: Math.round(Math.random() * 1000),
-            uid: 'user' + i
+            img: './bomi/' + i + '.jpg'
         }
         user.username += String.fromCharCode(Math.round(Math.random() * 25) + 65)
         for (let j = 1; j <= 4; j++) {
@@ -52,6 +53,7 @@
         }
         list.push(user)
     }
+    function done(){return (svd.count++)%7 <= 4}
 
     // render table
     function renderTree() {
@@ -70,7 +72,8 @@
                         el('th', {
                             'id': 'sort-head2',
                             sortKey: 'reputation'
-                        }, ['REPUTATION'])
+                        }, ['REPUTATION']),
+                        el('th', ['IMAGE'])
                     ])
                 ]),
                 el('tbody', rows)
@@ -90,6 +93,7 @@
                     el('td', [item.username]),
                     el('td', [item.age]),
                     el('td', [item.reputation]),
+                    el('td', [el('img', {src: item.img})])
                 ])
             )
         }
@@ -108,6 +112,7 @@
         var trigger = sortTriggers[i];
         (function (_trigger) {
             _trigger.onclick = function () {
+                if(done())return
                 var key = _trigger.getAttribute('sortKey')
                 if (key === sortKey) {
                     sortType = !sortType
@@ -134,16 +139,68 @@
         })
     }
 
-    var startTime = new Date().getTime()
     var head1 = document.getElementById('sort-head1')
     var head2 = document.getElementById('sort-head2')
-    for(let i = 1;i<= 1000;i++){
+    var startTime, endTime, times = 100
+
+    // using virtual-dom algorithm
+    startTime = new Date().getTime()
+    for (let i = 1; i <= times; i++) {
         head1.click()
     }
-    for(let i = 1;i<= 1000;i++){
+    for (let i = 1; i <= times; i++) {
         head2.click()
     }
-    var endTime = new Date().getTime()
+    endTime = new Date().getTime()
+    console.log(endTime - startTime)
+
+    // using real dom
+    var tbody = document.getElementsByTagName('tbody')[0]
+    startTime = new Date().getTime()
+    sortKey = 'age'
+    for (let i = 1; i <= times; i++){
+        sortType = !sortType
+        sortData()
+        while(tbody.hasChildNodes()){
+            tbody.removeChild(tbody.childNodes[0])
+        }
+        for(let user of list){
+            var tr = document.createElement('tr')
+            tr.setAttribute('key', user.uid)
+            for(let field in user){
+                var td = document.createElement('td')
+                td.innerText = user[field]
+                tr.appendChild(td)
+            }
+            tbody.appendChild(tr)
+        }
+    }
+    sortKey = 'reputation'
+    for (let i = 1; i <= times; i++){
+        sortType = !sortType
+        sortData()
+        while(tbody.hasChildNodes()){
+            tbody.removeChild(tbody.childNodes[0])
+        }
+        for(let user of list){
+            var tr = document.createElement('tr')
+            tr.setAttribute('key', user.uid)
+            for(let field in user){
+                var td = document.createElement('td')
+                if(field === 'img'){
+                    var img = document.createElement('img')
+                    img.setAttribute('src', user[field])
+                    td.appendChild(img)
+                }
+                else{
+                    td.innerText = user[field]
+                }
+                tr.appendChild(td)
+            }
+            tbody.appendChild(tr)
+        }
+    }
+    endTime = new Date().getTime()
     console.log(endTime - startTime)
 
 </script>
