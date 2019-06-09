@@ -1,0 +1,216 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <!-- <meta HTTP-EQUIV="pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate">
+    <meta HTTP-EQUIV="expires" CONTENT="0"> -->
+    <title>virtual dom benchmark</title>
+    <style>
+        thead {
+            color: green;
+        }
+
+        tbody {
+            color: blue;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        img {
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>testing benchmark:</h2>
+    <div>
+        <button onclick="adding()">addition</button>
+        <input id="addition">
+    </div>
+    <div>
+        <button onclick="deleting()">deletion</button>
+        <input id="deletion">
+    </div>
+    <div>
+        <button onclick="sorting()">sort</button>
+        <input id="sortKey">
+        <input id="sortType">
+    </div>
+</body>
+
+<script src="../dist/bundle.js"></script>
+<script>
+    var el = svd.el
+    var diff = svd.diff
+    var patch = svd.patch.patch
+
+    var list = []
+    var sortKey = 'age'
+    var sortType = 1
+
+    // render table
+
+    function renderTree() {
+        var rows = renderRows()
+        return el('div', [
+            el('b', ['sortKey: ' + sortKey, ' | sortType: ' + (sortType ? 'up' : 'down')]),
+            el('table', [
+                el('thead', [
+                    el('tr', [
+                        el('th', ['UID']),
+                        el('th', ['NAME']),
+                        el('th', {
+                            'id': 'sort-head1',
+                            sortKey: 'age'
+                        }, ['AGE']),
+                        el('th', {
+                            'id': 'sort-head2',
+                            sortKey: 'reputation'
+                        }, ['REPUTATION']),
+                        el('th', ['IMAGE'])
+                    ])
+                ]),
+                el('tbody', rows)
+            ])
+        ])
+
+        function renderRows() {
+            var rows = []
+            for (var i = 0, len = list.length; i < len; i++) {
+                var item = list[i]
+                rows.push(
+                    el('tr', {
+                        key: item.uid
+                    }, [
+                        el('td', [item.uid]),
+                        el('td', [item.username]),
+                        el('td', [item.age]),
+                        el('td', [item.reputation]),
+                        el('td', [el('img', {
+                            src: item.img
+                        })])
+                    ])
+                )
+            }
+            return rows
+        }
+    }
+
+    var tree = renderTree()
+    var dom = tree.render()
+    document.body.appendChild(dom)
+
+    // update virtual dom or real dom
+
+    function updateTree() {
+        var newTree = renderTree()
+        var patches = diff(tree, newTree)
+        patch(dom, patches)
+        tree = newTree
+    }
+
+    function updateDOM() {
+        var tbody = document.getElementsByTagName('tbody')[0]
+        while (tbody.hasChildNodes()) {
+            tbody.removeChild(tbody.childNodes[0])
+        }
+        for (let user of list) {
+            var tr = document.createElement('tr')
+            tr.setAttribute('key', user.uid)
+            for (let field in user) {
+                var td = document.createElement('td')
+                if (field === 'img') {
+                    var img = document.createElement('img')
+                    img.setAttribute('src', user[field])
+                    td.appendChild(img)
+                } else {
+                    td.innerText = user[field]
+                }
+                tr.appendChild(td)
+            }
+            tbody.appendChild(tr)
+        }
+    }
+
+    // testing benchmark
+
+    function adding() {
+        var addition = document.getElementById('addition')
+        var addCount = addition.value
+        console.log('adding ' + addCount + ' users...')
+        addUsers(addCount)
+        benchmark()
+
+        function addUsers(count) {
+            for (var i = 1; i <= count; i++) {
+                let user = {
+                    uid: 'user' + list.length + 1,
+                    username: '',
+                    age: Math.round(Math.random() * 99 + 1),
+                    reputation: Math.round(Math.random() * 1000),
+                    img: './bomi/' + (list.length % 1000 + 1) + '.jpg'
+                }
+                user.username += String.fromCharCode(Math.round(Math.random() * 25) + 65)
+                for (let j = 1; j <= 4; j++) {
+                    user.username += String.fromCharCode(Math.round(Math.random() * 25) + 97)
+                }
+                list.push(user)
+            }
+        }
+    }
+
+    function deleting() {
+        var deletion = document.getElementById('deletion')
+        var deleteCount = deletion.value
+        console.log('deleting ' + deleteCount + ' users...')
+        deleteUsers(deleteCount)
+        benchmark()
+
+        function deleteUsers(count) {
+            while (count--) {
+                list.pop()
+            }
+        }
+    }
+
+    function sorting() {
+        var key = document.getElementById('sortKey').value
+        var type = document.getElementById('sortType').value
+        console.log('sorting...  (sortKey:' + key + ', sortType:' + type + ')')
+        sortKey = key
+        sortType = type
+        sortData()
+        benchmark()
+
+        function sortData() {
+            list.sort(function (a, b) {
+                if (sortType) {
+                    return a[sortKey] - b[sortKey]
+                } else {
+                    return b[sortKey] - a[sortKey]
+                }
+            })
+        }
+    }
+
+    function benchmark() {
+        let start = new Date().getTime()
+        updateTree()
+        let end = new Date().getTime()
+        console.log('time for virtual dom: ' + (end - start).toString() + 'ms')
+        start = new Date().getTime()
+        updateDOM()
+        end = new Date().getTime()
+        console.log('time for real dom: ' + (end - start).toString() + 'ms')
+    }
+</script>
+
+</html>

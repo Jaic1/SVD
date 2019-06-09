@@ -4,7 +4,6 @@ window.svd = {
     diff: require('./lib/diff'),
     patch: require('./lib/patch'),
     listDiff: require('./lib/list-diff'),
-    count: 0
 }
 },{"./lib/diff":2,"./lib/element":3,"./lib/list-diff":4,"./lib/patch":5}],2:[function(require,module,exports){
 var patch = require('./patch')

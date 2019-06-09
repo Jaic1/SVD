@@ -3,5 +3,4 @@ window.svd = {
     diff: require('./lib/diff'),
     patch: require('./lib/patch'),
     listDiff: require('./lib/list-diff'),
-    count: 0
 }
