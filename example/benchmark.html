@@ -44,6 +44,11 @@
         <input id="sortKey">
         <input id="sortType">
     </div>
+    <div>
+        <p id='desp'></p>
+        <p id='vdom'></p>
+        <p id='dom'></p>
+    </div>
 </body>
 
 <script src="../dist/bundle.js"></script>
@@ -61,7 +66,7 @@
     function renderTree() {
         var rows = renderRows()
         return el('div', [
-            el('b', ['sortKey: ' + sortKey, ' | sortType: ' + (sortType ? 'up' : 'down')]),
+            el('b', ['sortKey: ' + sortKey, ' | sortType: ' + (sortType == 1 ? 'up' : 'down')]),
             el('table', [
                 el('thead', [
                     el('tr', [
@@ -108,7 +113,7 @@
     var dom = tree.render()
     document.body.appendChild(dom)
 
-    // update virtual dom or real dom
+    // update virtual dom and real dom
 
     function updateTree() {
         var newTree = renderTree()
@@ -145,7 +150,9 @@
     function adding() {
         var addition = document.getElementById('addition')
         var addCount = addition.value
-        console.log('adding ' + addCount + ' users...')
+        // console.log('adding ' + addCount + ' users...')
+        document.getElementById('desp').innerText = 'adding ' +
+            addCount + ' into ' + list.length + ' users...'
         addUsers(addCount)
         benchmark()
 
@@ -156,7 +163,7 @@
                     username: '',
                     age: Math.round(Math.random() * 99 + 1),
                     reputation: Math.round(Math.random() * 1000),
-                    img: './bomi/' + (list.length % 1000 + 1) + '.jpg'
+                    img: './img/' + (list.length % 1000 + 1) + '.jpg'
                 }
                 user.username += String.fromCharCode(Math.round(Math.random() * 25) + 65)
                 for (let j = 1; j <= 4; j++) {
@@ -170,7 +177,9 @@
     function deleting() {
         var deletion = document.getElementById('deletion')
         var deleteCount = deletion.value
-        console.log('deleting ' + deleteCount + ' users...')
+        // console.log('deleting ' + deleteCount + ' users...')
+        document.getElementById('desp').innerText = 'deleting ' +
+            deleteCount + ' of ' + list.length + ' users...'
         deleteUsers(deleteCount)
         benchmark()
 
@@ -184,7 +193,9 @@
     function sorting() {
         var key = document.getElementById('sortKey').value
         var type = document.getElementById('sortType').value
-        console.log('sorting...  (sortKey:' + key + ', sortType:' + type + ')')
+        // console.log('sorting...  (sortKey:' + key + ', sortType:' + type + ')')
+        document.getElementById('desp').innerText = 'sorting ' +
+            list.length + ' users...  (sortKey:' + key + ', sortType:' + type + ')'
         sortKey = key
         sortType = type
         sortData()
@@ -192,7 +203,7 @@
 
         function sortData() {
             list.sort(function (a, b) {
-                if (sortType) {
+                if (sortType == 1) {
                     return a[sortKey] - b[sortKey]
                 } else {
                     return b[sortKey] - a[sortKey]
@@ -205,11 +216,17 @@
         let start = new Date().getTime()
         updateTree()
         let end = new Date().getTime()
-        console.log('time for virtual dom: ' + (end - start).toString() + 'ms')
+        // console.log('time for virtual dom: ' + (end - start).toString() + 'ms')
+        document.getElementById('vdom').innerText =
+            'time for virtual dom: ' +
+            (end - start).toString() + 'ms'
         start = new Date().getTime()
         updateDOM()
         end = new Date().getTime()
-        console.log('time for real dom: ' + (end - start).toString() + 'ms')
+        // console.log('time for real dom: ' + (end - start).toString() + 'ms')
+        document.getElementById('dom').innerText =
+            'time for real dom: ' +
+            (end - start).toString() + 'ms'
     }
 </script>
 

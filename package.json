@@ -21,9 +21,6 @@
     "url": "https://github.com/Jaic1/SVD/issues"
   },
   "homepage": "https://github.com/Jaic1/SVD#readme",
-  "dependencies": {
-    "list-diff2": "0.1.4"
-  },
   "devDependencies": {
     "standard": "*",
     "browserify": "*"
